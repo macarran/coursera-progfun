@@ -37,7 +37,7 @@ object Anagrams {
    *  same character, and are represented as a lowercase character in the occurrence list.
    */
   def wordOccurrences(w: Word): Occurrences =
-    (w groupBy(c => c.toLower) map { case (k, v) => (k, v.length) } toList) sorted
+    (w groupBy (c => c.toLower) map { case (k, v) => (k, v.length) } toList) sorted
 
   /** Converts a sentence into its character occurrence list. */
   def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s mkString)
@@ -58,10 +58,12 @@ object Anagrams {
    *    List(('a', 1), ('e', 1), ('t', 1)) -> List("ate", "eat", "tea")
    *
    */
-  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = ???
+  lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] =
+    dictionary groupBy (w => wordOccurrences(w)) withDefaultValue (Nil)
 
   /** Returns all the anagrams of a given word. */
-  def wordAnagrams(word: Word): List[Word] = ???
+  def wordAnagrams(word: Word): List[Word] =
+    dictionaryByOccurrences(wordOccurrences(word))
 
   /**
    * Returns the list of all subsets of the occurrence list.
@@ -86,7 +88,14 @@ object Anagrams {
    *  Note that the order of the occurrence list subsets does not matter -- the subsets
    *  in the example above could have been displayed in some other order.
    */
-  def combinations(occurrences: Occurrences): List[Occurrences] = ???
+  def combinations(occurrences: Occurrences): List[Occurrences] = occurrences match {
+    case Nil => List(List())
+    case (char, count) :: tail =>
+      (for {
+        rest <- combinations(tail)
+        indComb <- (for (i <- 1 to count) yield (char, i))
+      } yield indComb :: rest) ++ combinations(tail)
+  }
 
   /**
    * Subtracts occurrence list `y` from occurrence list `x`.
@@ -99,7 +108,16 @@ object Anagrams {
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  def subtract(x: Occurrences, y: Occurrences): Occurrences =
+    //start with X as a base, go over y's elements
+    (y.foldLeft(x)) {
+      // used case to do the notation (_,(_,_)), could've done without case -> (_,_)
+      case (occ, (charToFind, countToSubtract)) => occ map {
+        // for each (Char,Int) pair in occurrences, substract the amount in y (countToSubtract) for charToFind 
+        case (char, count) => if (charToFind == char) (char, count - countToSubtract) else (char, count)
+      }
+      //filter all tuples with occurrence <= 0
+    } filter { case (char, oc) => oc > 0 }
 
   /**
    * Returns a list of all anagram sentences of the given sentence.
