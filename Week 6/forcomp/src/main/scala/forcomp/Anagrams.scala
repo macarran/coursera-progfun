@@ -37,7 +37,7 @@ object Anagrams {
    *  same character, and are represented as a lowercase character in the occurrence list.
    */
   def wordOccurrences(w: Word): Occurrences =
-    (w groupBy (c => c.toLower) map { case (k, v) => (k, v.length) } toList) sorted
+    ((w groupBy (c => c.toLower) map { case (k, v) => (k, v.length) }) toList) sorted
 
   /** Converts a sentence into its character occurrence list. */
   def sentenceOccurrences(s: Sentence): Occurrences = wordOccurrences(s mkString)
@@ -160,6 +160,29 @@ object Anagrams {
    *
    *  Note: There is only one anagram of an empty sentence.
    */
-  def sentenceAnagrams(sentence: Sentence): List[Sentence] = ???
+  def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+
+    def anagramHelper(occ: Occurrences): List[Sentence] = {
+      if (occ.isEmpty)
+        List(Nil)
+      else {
+        //if list is not empty, obtain all the combinations for the occurrence list
+        val combs = combinations(occ)
+        for {
+          //for each combination...
+          combination <- combs
+          //get the words that match it...
+          words = dictionaryByOccurrences.apply(combination)
+          word <- words
+          //and also see what other anagrams can be done with the remainings of the occurrence list
+          //after removing used characters...
+          anagramsLeft <- anagramHelper(subtract(occ, combination))
+        } yield word :: anagramsLeft
+      }
+    }
+
+    anagramHelper(sentenceOccurrences(sentence))
+
+  }
 
 }
