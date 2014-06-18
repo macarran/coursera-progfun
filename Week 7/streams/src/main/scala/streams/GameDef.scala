@@ -130,7 +130,8 @@ trait GameDef {
      * Returns the list of blocks that can be obtained by moving
      * the current block, together with the corresponding move.
      */
-    def neighbors: List[(Block, Move)] = ???
+    def neighbors: List[(Block, Move)] =
+      (right, Right) :: (left, Left) :: (down, Down) :: ((up, Up) :: Nil)
 
     /**
      * Returns the list of positions reachable from the current block
